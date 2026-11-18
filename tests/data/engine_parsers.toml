@@ -1,0 +1,100 @@
+# Engine startup rules and registered parser names, used only by the AC-10 tests
+# (tests/test_recommend.py: every flag line parserpick prints must be one the engine accepts).
+#
+# These are name lists copied from the engine source at the tagged release, not engine code.
+# Checked 2026-11-19 against vLLM v0.34.0 and SGLang v0.5.23 (the versions in
+# src/parserpick/data/formats.toml [meta.engines]). When formats.toml gets a new parser name,
+# the tests fail until the name is confirmed here from the engine source.
+# When the verified engine versions change, refresh both files together.
+
+[vllm]
+version = "0.34.0"
+checked = "2026-11-19"
+
+# vllm/tool_parsers/__init__.py, _TOOL_PARSERS_TO_REGISTER keys (62 names).
+tool_source = "https://raw.githubusercontent.com/vllm-project/vllm/v0.34.0/vllm/tool_parsers/__init__.py"
+tool = [
+  "dots", "deepseek_v3", "deepseek_v31", "deepseek_v32", "deepseek_v4", "deepseek_v41",
+  "cohere_command3", "cohere_command4", "ernie45", "glm45", "glm47", "ling3", "granite-20b-fc",
+  "granite", "granite4", "granite_toolcall_parser", "hermes", "hf", "beam", "poolside_v1",
+  "hunyuan_a13b", "hy_v3", "hy_v4", "internlm", "jamba", "lfm2", "kimi_k2", "kimi_k3",
+  "k2_horizon", "llama3_json", "llama4_json", "llama4_pythonic", "longcat", "mimo", "minimax_m2",
+  "minimax_m3", "minicpm5", "mistral", "olmo3", "plamo3", "muse", "muse_glimmer", "musespark",
+  "openai", "phi4_mini_json", "pythonic", "qwen3_coder", "qwen3_json", "qwen3_xml", "ripple",
+  "seed_oss", "step3", "step3p5", "step5", "inkling", "xlam", "gigachat3", "functiongemma",
+  "gemma4", "apertus", "zaya", "zaya_xml",
+]
+
+# vllm/reasoning/__init__.py, _REASONING_PARSERS_TO_REGISTER keys (44 names).
+reasoning_source = "https://raw.githubusercontent.com/vllm-project/vllm/v0.34.0/vllm/reasoning/__init__.py"
+reasoning = [
+  "deepseek_r1", "deepseek_v3", "deepseek_v4", "deepseek_v41", "poolside_v1", "cohere_command3",
+  "cohere_command4", "ernie45", "gemma4", "glm45", "glm47", "ling3", "openai_gptoss", "granite",
+  "granite_thinking_parser", "hf", "beam", "holo2", "hunyuan_a13b", "hy_v3", "hy_v4", "kimi_k2",
+  "kimi_k3", "k2_horizon", "mimo", "minicpmv", "minimax_m2", "minimax_m2_append_think",
+  "minimax_m3", "mistral", "nemotron_v3", "olmo3", "plamo3", "muse", "muse_glimmer", "musespark",
+  "qwen3", "ripple", "seed_oss", "step3", "step3p5", "step5", "inkling", "zaya",
+]
+
+# Startup checks that `vllm serve` runs before loading the model
+# (vllm/entrypoints/cli/serve.py:158-159 calls validate_parsed_serve_args):
+#   vllm/entrypoints/common/cli_args.py:562-563
+#     if args.enable_auto_tool_choice and not args.tool_call_parser:
+#         raise TypeError("Error: --enable-auto-tool-choice requires --tool-call-parser")
+#   vllm/entrypoints/common/cli_args.py:628-630  (validate_api_server_args)
+#     unregistered --tool-call-parser -> KeyError("invalid tool call parser: ...")
+#   vllm/renderers/chat_utils/chat_template.py:29-47  (validate_chat_template)
+#     a --chat-template value without "{", "}" or a newline must be an existing file path or a
+#     file in the built-in chat_templates folder, else "appears path-like, but doesn't exist".
+#     So a template NAME such as `tool_use` is refused at startup (the docs page still says it
+#     works); with no flag, vLLM picks the checkpoint's `tool_use` template itself for requests
+#     that send tools (vllm/renderers/hf.py:341-343 -> transformers get_chat_template).
+startup_source = "https://raw.githubusercontent.com/vllm-project/vllm/v0.34.0/vllm/entrypoints/common/cli_args.py"
+chat_template_source = "https://raw.githubusercontent.com/vllm-project/vllm/v0.34.0/vllm/renderers/chat_utils/chat_template.py"
+# Flags parserpick may print for vLLM: switches take no value, the others take one.
+switch_flags = ["--enable-auto-tool-choice"]
+value_flags = ["--tool-call-parser", "--reasoning-parser", "--chat-template"]
+# --enable-auto-tool-choice and --tool-call-parser must appear together (both or neither).
+auto_tool_choice_needs_parser = true
+
+[sglang]
+version = "0.5.23"
+checked = "2026-11-19"
+
+# python/sglang/srt/function_call/parser_names.py, TOOL_CALL_PARSER_NAMES (44 names). These are
+# the argparse `choices` of --tool-call-parser (server_args.py:377-385); the list equals
+# FunctionCallParser.ToolCallParserEnum in function_call_parser.py (compared on 2026-11-19).
+tool_source = "https://raw.githubusercontent.com/sgl-project/sglang/v0.5.23/python/sglang/srt/function_call/parser_names.py"
+tool = [
+  "apertus2509", "beam", "cohere_command4", "deepseekv3", "deepseekv31", "deepseekv32",
+  "deepseekv4", "deepseekv41", "dots", "glm", "glm45", "glm47", "gpt-oss", "k2_horizon", "kimi_k2",
+  "kimi_k3", "lfm2", "ling3", "llama3", "mimo", "minicpm5", "mistral", "muse", "poolside_v1",
+  "pythonic", "qwen", "qwen25", "qwen3_coder", "spark25", "step3", "step3p5", "minimax-m2",
+  "minimax-m3", "nanbeige", "trinity", "interns1", "hermes", "hunyuan", "gigachat3", "gigachat35",
+  "gemma4", "inkling", "iquest_q1", "response_template",
+]
+
+# python/sglang/srt/parser/reasoning_parser_names.py, REASONING_PARSER_NAMES (36 names); argparse
+# `choices` of --reasoning-parser (server_args.py:367-375), equal to ReasoningParser.DetectorMap.
+reasoning_source = "https://raw.githubusercontent.com/sgl-project/sglang/v0.5.23/python/sglang/srt/parser/reasoning_parser_names.py"
+reasoning = [
+  "apertus2509", "beam", "deepseek-r1", "deepseek-v3", "deepseek-v4", "deepseek-v41", "dots",
+  "glm45", "ling3", "hunyuan", "gpt-oss", "k2_horizon", "kimi", "kimi_k2", "kimi_k3", "mimo", "muse",
+  "poolside_v1", "qwen3", "qwen3-thinking", "minimax", "minimax-append-think", "minimax-m3",
+  "nanbeige", "step3", "step3p5", "mistral", "nemotron_3", "granite_thinking_parser", "interns1",
+  "gemma4", "inkling", "iquest_q1", "cohere_command4", "gigachat35", "response_template",
+]
+
+# SGLang has no --enable-auto-tool-choice; --tool-call-parser alone turns tool parsing on
+# (python/sglang/srt/server_args.py defines no such flag, so argparse would reject it).
+#   python/sglang/srt/parser/template_manager.py:228-247
+#     --chat-template must be a built-in conversation template name or an existing file,
+#     else RuntimeError("Chat template ... is not a built-in template name or a valid chat
+#     template file path."). A checkpoint's named template is chosen with
+#     --hf-chat-template-name (arg_groups/fields/serving.py:184-187); without it SGLang uses the
+#     first named template (template_manager.py:427-450).
+startup_source = "https://raw.githubusercontent.com/sgl-project/sglang/v0.5.23/python/sglang/srt/server_args.py"
+chat_template_source = "https://raw.githubusercontent.com/sgl-project/sglang/v0.5.23/python/sglang/srt/parser/template_manager.py"
+switch_flags = []
+value_flags = ["--tool-call-parser", "--reasoning-parser", "--chat-template", "--hf-chat-template-name"]
+auto_tool_choice_needs_parser = false
