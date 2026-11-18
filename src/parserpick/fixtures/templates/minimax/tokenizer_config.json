@@ -1,0 +1,1 @@
+{"added_tokens_decoder": {"1": {"content": "<think>"}, "2": {"content": "</think>"}, "3": {"content": "<minimax:tool_call>"}}}

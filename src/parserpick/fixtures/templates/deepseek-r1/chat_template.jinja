@@ -1,0 +1,23 @@
+{#- Synthetic, abbreviated stand-in for a DeepSeek-R1-0528-style template. Note: it never reads `tools`
+    and concatenates tool-call arguments as a string, like the real family's default template. -#}
+{{- bos_token }}
+{%- for message in messages %}
+{%- if message.role == 'user' %}
+{{- '<｜User｜>' + message.content }}
+{%- elif message.role == 'assistant' %}
+{%- set text = message.content or '' %}
+{%- if '</think>' in text %}{% set text = text.split('</think>')[-1] %}{% endif %}
+{{- '<｜Assistant｜>' + text }}
+{%- if message.tool_calls %}
+{{- '<｜tool▁calls▁begin｜>' }}
+{%- for tool_call in message.tool_calls %}
+{{- '<｜tool▁call▁begin｜>function<｜tool▁sep｜>' + tool_call.function.name + '\n```json\n' + tool_call.function.arguments + '\n```<｜tool▁call▁end｜>' }}
+{%- endfor %}
+{{- '<｜tool▁calls▁end｜>' }}
+{%- endif %}
+{{- '<｜end▁of▁sentence｜>' }}
+{%- elif message.role == 'tool' %}
+{{- '<｜tool▁output▁begin｜>' + message.content + '<｜tool▁output▁end｜>' }}
+{%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}{{ '<｜Assistant｜><think>\n' }}{% endif %}

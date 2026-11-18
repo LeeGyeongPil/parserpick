@@ -1,0 +1,1 @@
+[TOOL_CALLS] [{"name": "get_weather", "arguments": {"city": "Seoul"}, "id": "abc123XYZ"}]

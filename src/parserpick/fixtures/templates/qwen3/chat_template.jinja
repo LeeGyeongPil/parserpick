@@ -1,0 +1,28 @@
+{#- Synthetic, abbreviated stand-in for a Qwen3-style template (hermes JSON + think). Written for parserpick practice. -#}
+{%- if tools %}
+{{- '<|im_start|>system\nYou may call functions. Signatures are inside <tools></tools>:\n<tools>' }}
+{%- for tool in tools %}
+{{- '\n' + (tool | tojson) }}
+{%- endfor %}
+{{- '\n</tools>\nFor each call return a JSON object inside <tool_call></tool_call> tags:\n<tool_call>\n{"name": <function-name>, "arguments": <args-json-object>}\n</tool_call><|im_end|>\n' }}
+{%- endif %}
+{%- for message in messages %}
+{%- if message.role == 'user' %}
+{{- '<|im_start|>user\n' + message.content + '<|im_end|>\n' }}
+{%- elif message.role == 'assistant' %}
+{{- '<|im_start|>assistant\n' + (message.content or '') }}
+{%- for tool_call in message.tool_calls or [] %}
+{%- set call = tool_call.function if tool_call.function is defined else tool_call %}
+{{- '\n<tool_call>\n{"name": "' + call.name + '", "arguments": ' }}
+{%- if call.arguments is string %}{{ call.arguments }}{% else %}{{ call.arguments | tojson }}{% endif %}
+{{- '}\n</tool_call>' }}
+{%- endfor %}
+{{- '<|im_end|>\n' }}
+{%- elif message.role == 'tool' %}
+{{- '<|im_start|>user\n<tool_response>\n' + message.content + '\n</tool_response><|im_end|>\n' }}
+{%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}
+{{- '<|im_start|>assistant\n' }}
+{%- if enable_thinking is defined and enable_thinking is false %}{{ '<think>\n\n</think>\n\n' }}{% endif %}
+{%- endif %}

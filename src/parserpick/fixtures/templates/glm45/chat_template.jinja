@@ -1,0 +1,32 @@
+{#- Synthetic, abbreviated stand-in for a GLM-4.5-style template (arg_key/arg_value). -#}
+{{- '[gMASK]<sop>' }}
+{%- if tools %}
+{{- '<|system|>\n# Tools\nYou may call functions. Signatures are inside <tools></tools>:\n<tools>' }}
+{%- for tool in tools %}
+{{- '\n' + (tool | tojson) }}
+{%- endfor %}
+{{- '\n</tools>\nFor each call output:\n<tool_call>{function-name}\n<arg_key>{arg-key-1}</arg_key>\n<arg_value>{arg-value-1}</arg_value>\n</tool_call>' }}
+{%- endif %}
+{%- for message in messages %}
+{%- if message.role == 'user' %}
+{{- '<|user|>\n' + message.content }}
+{%- elif message.role == 'assistant' %}
+{{- '<|assistant|>\n<think></think>\n' + (message.content or '') }}
+{%- for tool_call in message.tool_calls or [] %}
+{%- set call = tool_call.function if tool_call.function is defined else tool_call %}
+{{- '<tool_call>' + call.name + '\n' }}
+{%- if call.arguments is string %}{{ call.arguments }}{% else %}
+{%- for key, value in call.arguments.items() %}
+{{- '<arg_key>' + key + '</arg_key>\n<arg_value>' + (value if value is string else value | tojson) + '</arg_value>\n' }}
+{%- endfor %}
+{%- endif %}
+{{- '</tool_call>' }}
+{%- endfor %}
+{%- elif message.role == 'tool' %}
+{{- '<|observation|>\n<tool_response>\n' + message.content + '\n</tool_response>' }}
+{%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}
+{{- '<|assistant|>' }}
+{%- if enable_thinking is defined and enable_thinking is false %}{{ '\n<think></think>' }}{% endif %}
+{%- endif %}

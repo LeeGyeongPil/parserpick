@@ -1,0 +1,31 @@
+{#- Synthetic, abbreviated stand-in for a pythonic tool-calling template (Llama 4 style). -#}
+{{- '<|begin_of_text|>' }}
+{%- if tools %}
+{{- '<|header_start|>system<|header_end|>\n\nRespond in the format [func_name1(param_name1=param_value1, param_name2=param_value2), func_name2(...)]. Functions:\n' }}
+{%- for tool in tools %}{{ (tool | tojson) + '\n' }}{% endfor %}
+{{- '<|eot|>' }}
+{%- endif %}
+{%- for message in messages %}
+{%- if message.role == 'user' %}
+{{- '<|header_start|>user<|header_end|>\n\n' + message.content + '<|eot|>' }}
+{%- elif message.role == 'assistant' %}
+{{- '<|header_start|>assistant<|header_end|>\n\n' }}
+{%- if message.tool_calls %}
+{{- '[' }}
+{%- for tool_call in message.tool_calls %}
+{%- set call = tool_call.function if tool_call.function is defined else tool_call %}
+{{- call.name + '(' }}
+{%- if call.arguments is string %}{{ call.arguments }}{% else %}
+{%- for key, value in call.arguments.items() %}{{ key + '=' + (value | tojson) }}{% if not loop.last %}{{ ', ' }}{% endif %}{% endfor %}
+{%- endif %}
+{{- ')' }}{% if not loop.last %}{{ ', ' }}{% endif %}
+{%- endfor %}
+{{- ']<|eot|>' }}
+{%- else %}
+{{- (message.content or '') + '<|eot|>' }}
+{%- endif %}
+{%- elif message.role == 'tool' %}
+{{- '<|header_start|>ipython<|header_end|>\n\n' + message.content + '<|eot|>' }}
+{%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}{{ '<|header_start|>assistant<|header_end|>\n\n' }}{% endif %}

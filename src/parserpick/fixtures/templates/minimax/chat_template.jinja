@@ -1,0 +1,31 @@
+{#- Synthetic, abbreviated stand-in for a MiniMax-M2-style template (<minimax:tool_call> XML + think). -#}
+{%- if tools %}
+{{- ']~!b[]~b]system\nYou may call tools:\n<tools>' }}
+{%- for tool in tools %}{{ '\n' + (tool | tojson) }}{% endfor %}
+{{- '\n</tools>\nCall tools as:\n<minimax:tool_call>\n<invoke name="tool-name">\n<parameter name="arg-name">value</parameter>\n</invoke>\n</minimax:tool_call>[e~[\n' }}
+{%- endif %}
+{%- for message in messages %}
+{%- if message.role == 'user' %}
+{{- ']~b]user\n' + message.content + '[e~[\n' }}
+{%- elif message.role == 'assistant' %}
+{{- ']~b]ai\n' + (message.content or '') }}
+{%- if message.tool_calls %}
+{{- '<minimax:tool_call>\n' }}
+{%- for tool_call in message.tool_calls %}
+{%- set call = tool_call.function if tool_call.function is defined else tool_call %}
+{{- '<invoke name="' + call.name + '">\n' }}
+{%- if call.arguments is string %}{{ call.arguments + '\n' }}{% else %}
+{%- for key, value in call.arguments.items() %}
+{{- '<parameter name="' + key + '">' + (value if value is string else value | tojson) + '</parameter>\n' }}
+{%- endfor %}
+{%- endif %}
+{{- '</invoke>\n' }}
+{%- endfor %}
+{{- '</minimax:tool_call>' }}
+{%- endif %}
+{{- '[e~[\n' }}
+{%- elif message.role == 'tool' %}
+{{- ']~b]tool\n<response>' + message.content + '</response>[e~[\n' }}
+{%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}{{ ']~b]ai\n<think>\n' }}{% endif %}

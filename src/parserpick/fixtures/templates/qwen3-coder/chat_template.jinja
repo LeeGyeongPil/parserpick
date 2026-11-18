@@ -1,0 +1,29 @@
+{#- Synthetic, abbreviated stand-in for a Qwen3-Coder-style template (XML calls). -#}
+{%- if tools %}
+{{- '<|im_start|>system\nYou have access to these functions:\n<tools>' }}
+{%- for tool in tools %}
+{{- '\n<function>\n<name>' + tool.function.name + '</name>\n<description>' + tool.function.description + '</description>\n</function>' }}
+{%- endfor %}
+{{- '\n</tools>\nIf you choose to call a function ONLY reply in this format:\n<tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>\nvalue_1\n</parameter>\n</function>\n</tool_call><|im_end|>\n' }}
+{%- endif %}
+{%- for message in messages %}
+{%- if message.role == 'user' %}
+{{- '<|im_start|>user\n' + message.content + '<|im_end|>\n' }}
+{%- elif message.role == 'assistant' %}
+{{- '<|im_start|>assistant\n' + (message.content or '') }}
+{%- for tool_call in message.tool_calls or [] %}
+{%- set call = tool_call.function if tool_call.function is defined else tool_call %}
+{{- '\n<tool_call>\n<function=' + call.name + '>\n' }}
+{%- if call.arguments is string %}{{ call.arguments }}{% else %}
+{%- for key, value in call.arguments.items() %}
+{{- '<parameter=' + key + '>\n' + (value if value is string else value | tojson) + '\n</parameter>\n' }}
+{%- endfor %}
+{%- endif %}
+{{- '</function>\n</tool_call>' }}
+{%- endfor %}
+{{- '<|im_end|>\n' }}
+{%- elif message.role == 'tool' %}
+{{- '<|im_start|>user\n<tool_response>\n' + message.content + '\n</tool_response>\n<|im_end|>\n' }}
+{%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}

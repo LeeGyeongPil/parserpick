@@ -1,0 +1,26 @@
+{#- Synthetic, abbreviated stand-in for an OpenAI harmony (gpt-oss) template. -#}
+{{- '<|start|>system<|message|>Reasoning: medium\n# Valid channels: analysis, commentary, final.<|end|>' }}
+{%- if tools %}
+{{- '<|start|>developer<|message|># Tools\n## functions\nnamespace functions {' }}
+{%- for tool in tools %}
+{{- '\n// ' + tool.function.description + '\ntype ' + tool.function.name + ' = (_: ' + (tool.function.parameters | tojson) + ') => any;' }}
+{%- endfor %}
+{{- '\n}<|end|>' }}
+{%- endif %}
+{%- for message in messages %}
+{%- if message.role == 'user' %}
+{{- '<|start|>user<|message|>' + message.content + '<|end|>' }}
+{%- elif message.role == 'assistant' %}
+{%- for tool_call in message.tool_calls or [] %}
+{%- set call = tool_call.function if tool_call.function is defined else tool_call %}
+{{- '<|start|>assistant<|channel|>commentary to=functions.' + call.name + ' <|constrain|>json<|message|>' }}
+{%- if call.arguments is string %}{{ call.arguments }}{% else %}{{ call.arguments | tojson }}{% endif %}
+{{- '<|call|>' }}
+{%- else %}
+{{- '<|start|>assistant<|channel|>final<|message|>' + (message.content or '') + '<|end|>' }}
+{%- endfor %}
+{%- elif message.role == 'tool' %}
+{{- '<|start|>functions.' + (message.name or 'tool') + ' to=assistant<|channel|>commentary<|message|>' + message.content + '<|end|>' }}
+{%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}{{ '<|start|>assistant' }}{% endif %}

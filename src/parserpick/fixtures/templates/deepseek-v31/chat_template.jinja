@@ -1,0 +1,24 @@
+{#- Synthetic, abbreviated stand-in for a DeepSeek-V3.1-style template. Never reads `tools`;
+    concatenates arguments as a string. -#}
+{{- bos_token }}
+{%- for message in messages %}
+{%- if message.role == 'user' %}
+{{- '<｜User｜>' + message.content }}
+{%- elif message.role == 'assistant' %}
+{{- '<｜Assistant｜>' + (message.content or '') }}
+{%- if message.tool_calls %}
+{{- '<｜tool▁calls▁begin｜>' }}
+{%- for tool_call in message.tool_calls %}
+{{- '<｜tool▁call▁begin｜>' + tool_call.function.name + '<｜tool▁sep｜>' + tool_call.function.arguments + '<｜tool▁call▁end｜>' }}
+{%- endfor %}
+{{- '<｜tool▁calls▁end｜>' }}
+{%- endif %}
+{{- '<｜end▁of▁sentence｜>' }}
+{%- elif message.role == 'tool' %}
+{{- '<｜tool▁output▁begin｜>' + message.content + '<｜tool▁output▁end｜>' }}
+{%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}
+{{- '<｜Assistant｜>' }}
+{%- if thinking is defined and thinking %}{{ '<think>' }}{% else %}{{ '</think>' }}{% endif %}
+{%- endif %}

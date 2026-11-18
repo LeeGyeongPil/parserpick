@@ -1,0 +1,5 @@
+<think>need weather</think>
+
+<tool_call>
+{"name": "get_weather", "arguments": {"city": "Seoul"}}
+</tool_call>

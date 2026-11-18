@@ -1,0 +1,274 @@
+# parserpick format table. Edit this file (not the code) to add a family or fix a name.
+#
+# Parser names were checked against the engine documentation on 2026-11-19:
+#   vLLM   tool calling   https://docs.vllm.ai/en/latest/features/tool_calling/
+#   vLLM   reasoning      https://docs.vllm.ai/en/latest/features/reasoning_outputs/
+#   SGLang tool parser    https://docs.sglang.io/advanced_features/tool_parser.html
+#   SGLang reasoning      https://docs.sglang.io/advanced_features/separate_reasoning.html
+# A value of "" means "no documented parser name for this engine".
+
+[meta]
+verified = "2026-11-19"
+
+[meta.engines]
+vllm = "0.34.0"
+sglang = "0.5.23"
+
+[meta.docs]
+vllm = "https://docs.vllm.ai/en/latest/features/tool_calling/"
+sglang = "https://docs.sglang.io/advanced_features/tool_parser.html"
+
+# --- markers: strings that identify a tool-call format --------------------------------
+# strong = true: specific enough to identify a format in model output as well.
+# regex  = true: `text` is a regular expression.
+
+[[markers]]
+id = "tool_call_tag"
+text = "<tool_call>"
+strong = true
+
+[[markers]]
+id = "xml_function"
+text = "<function="
+strong = true
+
+[[markers]]
+id = "xml_parameter"
+text = "<parameter="
+strong = true
+
+[[markers]]
+id = "arg_key"
+text = "<arg_key>"
+strong = true
+
+[[markers]]
+id = "python_tag"
+text = "<|python_tag|>"
+strong = true
+
+[[markers]]
+id = "json_parameters"
+text = '"parameters"'
+strong = false
+
+[[markers]]
+id = "pythonic_list"
+text = '\[\s*func_?name\d*\('
+regex = true
+strong = false
+
+[[markers]]
+id = "mistral_tool_calls"
+text = "[TOOL_CALLS]"
+strong = true
+
+[[markers]]
+id = "granite_tool_call"
+text = "<|tool_call|>"
+strong = true
+
+[[markers]]
+id = "deepseek_calls_begin"
+text = "<｜tool▁calls▁begin｜>"
+strong = true
+
+[[markers]]
+id = "deepseek_v3_function_sep"
+text = "function<｜tool▁sep｜>"
+strong = true
+
+[[markers]]
+id = "json_fence"
+text = "```json"
+strong = false
+
+[[markers]]
+id = "kimi_section"
+text = "<|tool_calls_section_begin|>"
+strong = true
+
+[[markers]]
+id = "harmony_channel"
+text = "<|channel|>"
+strong = true
+
+[[markers]]
+id = "minimax_tool_call"
+text = "<minimax:tool_call>"
+strong = true
+
+[[markers]]
+id = "think_open"
+text = "<think>"
+strong = false
+
+[[markers]]
+id = "think_close"
+text = "</think>"
+strong = false
+
+# --- families -----------------------------------------------------------------------
+# `reasoning_*`: reasoning parser to pair with the family when the template is think-capable.
+# `replay`: which replay extractor handles the family; open/close are the call delimiters
+# used to detect an unclosed call.
+# The human-readable description of each family is UI text, so it lives in the message tables
+# (`format.<family>.label` in locales/en.json and locales/ko.json), not here.
+
+[families.hermes]
+vllm = "hermes"
+sglang = "qwen"
+aliases = ["qwen2_5"]
+models = "Qwen2.5, Qwen3, QwQ, Hermes 2/3"
+replay = true
+open = "<tool_call>"
+close = "</tool_call>"
+reasoning_vllm = "qwen3"
+reasoning_sglang = "qwen3"
+reasoning_rule = "think"
+
+[families.qwen3_xml]
+vllm = "qwen3_xml"
+sglang = "qwen3_coder"
+aliases = ["qwen3_coder", "xml_function"]
+models = "Qwen3-Coder"
+replay = true
+open = "<tool_call>"
+close = "</tool_call>"
+
+[families.qwen3_xml.old_names]
+vllm = "qwen3_coder"
+vllm_source = "https://github.com/vllm-project/vllm/issues/22975"
+
+[families.glm45]
+vllm = "glm45"
+sglang = "glm"
+aliases = ["glm4_moe", "glm47"]
+models = "GLM-4.5, GLM-4.5-Air, GLM-4.6"
+replay = true
+open = "<tool_call>"
+close = "</tool_call>"
+reasoning_vllm = "glm45"
+reasoning_sglang = ""
+reasoning_rule = "think"
+
+[families.glm45.old_names]
+vllm = "glm4_moe"
+vllm_source = "https://discuss.vllm.ai/t/tool-call-issue-with-glm-4-5-air/1254"
+
+[families.llama3_json]
+vllm = "llama3_json"
+sglang = "llama3"
+aliases = []
+models = "Llama 3.1, 3.2, 3.3"
+replay = true
+open = ""
+close = ""
+chat_template_vllm = "examples/tool_chat_template_llama3.1_json.jinja"
+
+[families.pythonic]
+vllm = "pythonic"
+sglang = "pythonic"
+aliases = ["llama4_pythonic"]
+models = "Llama 3.2 1B/3B, Llama 4, ToolACE"
+replay = true
+open = ""
+close = ""
+chat_template_vllm = "examples/tool_chat_template_llama4_pythonic.jinja"
+
+[families.mistral]
+vllm = "mistral"
+sglang = "mistral"
+aliases = []
+models = "Mistral-7B-Instruct-v0.3 and compatible"
+replay = true
+open = "[TOOL_CALLS]"
+close = ""
+chat_template_vllm = "examples/tool_chat_template_mistral.jinja"
+
+[families.deepseek_v3]
+vllm = "deepseek_v3"
+sglang = "deepseekv3"
+aliases = []
+models = "DeepSeek-V3-0324, DeepSeek-R1-0528"
+replay = true
+open = "<｜tool▁call▁begin｜>"
+close = "<｜tool▁call▁end｜>"
+reasoning_vllm = "deepseek_r1"
+reasoning_sglang = "deepseek-r1"
+reasoning_rule = "think_implicit_start"
+chat_template_vllm = "examples/tool_chat_template_deepseekr1.jinja"
+chat_template_sglang = "./examples/chat_template/tool_chat_template_deepseekv3.jinja"
+
+[families.deepseek_v31]
+vllm = "deepseek_v31"
+sglang = "deepseekv31"
+aliases = []
+models = "DeepSeek-V3.1"
+replay = true
+open = "<｜tool▁call▁begin｜>"
+close = "<｜tool▁call▁end｜>"
+reasoning_vllm = "deepseek_v3"
+reasoning_sglang = "deepseek-v3"
+reasoning_rule = "think_implicit_start"
+chat_template_vllm = "examples/tool_chat_template_deepseekv31.jinja"
+chat_template_sglang = "./examples/chat_template/tool_chat_template_deepseekv31.jinja"
+
+[families.kimi_k2]
+vllm = "kimi_k2"
+sglang = "kimi_k2"
+aliases = []
+models = "Kimi-K2-Instruct"
+replay = true
+open = "<|tool_call_begin|>"
+close = "<|tool_call_end|>"
+
+[families.openai]
+vllm = "openai"
+sglang = "gpt-oss"
+aliases = ["gpt-oss"]
+models = "gpt-oss-20b, gpt-oss-120b"
+replay = false
+open = ""
+close = ""
+reasoning_vllm = "openai_gptoss"
+reasoning_sglang = "gpt-oss"
+reasoning_rule = "harmony"
+reasoning_always = true
+note_key = "note.reasoning_name_unlisted"
+
+[families.granite]
+vllm = "granite"
+sglang = ""
+aliases = []
+models = "Granite 3.0, 3.1"
+replay = false
+open = ""
+close = ""
+
+[families.minimax]
+vllm = ""
+sglang = ""
+aliases = []
+models = "MiniMax-M2"
+replay = false
+open = ""
+close = ""
+reasoning_vllm = "minimax_m2_append_think"
+reasoning_sglang = ""
+reasoning_rule = "think"
+
+# --- reasoning-only parser names accepted by `replay --reasoning` ------------------------
+[reasoning_rules]
+none = "no reasoning split"
+think = "<think>...</think>, opening tag in the output"
+think_implicit_start = "opening <think> lives in the prompt, output has only </think>"
+
+[reasoning_aliases]
+qwen3 = "think"
+glm45 = "think"
+minimax_m2_append_think = "think"
+deepseek_r1 = "think_implicit_start"
+"deepseek-r1" = "think_implicit_start"
+deepseek_v3 = "think_implicit_start"
+"deepseek-v3" = "think_implicit_start"

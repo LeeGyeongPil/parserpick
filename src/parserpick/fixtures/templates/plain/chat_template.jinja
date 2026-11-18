@@ -1,0 +1,7 @@
+{#- Synthetic template with no tool-call markers at all (plain chat). -#}
+{%- if tools %}Available tools: {{ tools | tojson }}
+{% endif %}
+{%- for message in messages %}
+{{- message.role + ': ' + (message.content or '') + '\n' }}
+{%- endfor %}
+{%- if add_generation_prompt %}{{ 'assistant: ' }}{% endif %}

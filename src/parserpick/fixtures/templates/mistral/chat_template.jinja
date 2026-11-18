@@ -1,0 +1,27 @@
+{#- Synthetic, abbreviated stand-in for a Mistral v0.3-style template. Like the real one it insists on
+    9-character call IDs and always JSON-encodes `arguments`, so string arguments get double-encoded. -#}
+{{- bos_token }}
+{%- if tools %}
+{{- '[AVAILABLE_TOOLS]' + (tools | tojson) + '[/AVAILABLE_TOOLS]' }}
+{%- endif %}
+{%- for message in messages %}
+{%- if message.role == 'user' %}
+{{- '[INST] ' + message.content + '[/INST]' }}
+{%- elif message.role == 'assistant' %}
+{%- if message.tool_calls %}
+{{- '[TOOL_CALLS] [' }}
+{%- for tool_call in message.tool_calls %}
+{%- if tool_call.id | length != 9 %}
+{{- raise_exception('Tool call IDs should be alphanumeric strings with length 9!') }}
+{%- endif %}
+{{- '{"name": "' + tool_call.function.name + '", "arguments": ' + (tool_call.function.arguments | tojson) + ', "id": "' + tool_call.id + '"}' }}
+{%- if not loop.last %}{{ ', ' }}{% endif %}
+{%- endfor %}
+{{- ']' + eos_token }}
+{%- else %}
+{{- (message.content or '') + eos_token }}
+{%- endif %}
+{%- elif message.role == 'tool' %}
+{{- '[TOOL_RESULTS] {"content": ' + message.content + ', "call_id": "' + message.tool_call_id + '"}[/TOOL_RESULTS]' }}
+{%- endif %}
+{%- endfor %}

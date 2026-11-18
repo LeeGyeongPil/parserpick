@@ -1,0 +1,1 @@
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>get_weather<｜tool▁sep｜>{"city": "Seoul"}<｜tool▁call▁end｜><｜tool▁calls▁end｜>

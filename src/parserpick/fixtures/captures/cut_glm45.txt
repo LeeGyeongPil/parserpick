@@ -1,0 +1,3 @@
+<tool_call>get_weather
+<arg_key>city</arg_key>
+<arg_value>Seoul
