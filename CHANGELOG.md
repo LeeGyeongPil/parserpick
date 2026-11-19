@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-19
+
+### Fixed
+- Tests: the English-output check no longer trips on OS-provided errno messages.
+
 ## [0.1.1] - 2026-11-19
 
 ### Fixed
