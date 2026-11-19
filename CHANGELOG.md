@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+## [0.1.1] - 2026-11-19
+
+### Fixed
+- `hf:` sources: a download cut short by the server now exits with code 4 and the network message instead of a traceback.
+
 ## [0.1.0] - 2026-11-19
 
 ### Added
