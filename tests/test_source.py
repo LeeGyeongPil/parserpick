@@ -130,6 +130,45 @@ def test_hf_connection_failure_exit_4(capsys):
     assert "http://127.0.0.1:9/org/model" in capsys.readouterr().err
 
 
+class _Truncated(BaseHTTPRequestHandler):
+    """Announces 5000 bytes, sends 21, then closes (http.client.IncompleteRead)."""
+
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Length", "5000")
+        self.end_headers()
+        self.wfile.write(b'{"chat_template": "x"')
+        self.wfile.flush()
+        self.close_connection = True
+
+    def log_message(self, *args):
+        pass
+
+
+@pytest.fixture
+def truncated_hub():
+    server = HTTPServer(("127.0.0.1", 0), _Truncated)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{server.server_port}"
+    server.shutdown()
+    server.server_close()
+    thread.join(timeout=5)
+
+
+def test_hf_truncated_response_exit_4(truncated_hub, capsys):
+    with pytest.raises(SourceError) as exc:
+        read_hf("org/model", {"HF_ENDPOINT": truncated_hub})
+    assert exc.value.exit_code == 4
+    assert exc.value.key == "err.network"
+    for lang in ("en", "ko"):
+        code = main(["inspect", "hf:org/model", "--lang", lang], environ={"HF_ENDPOINT": truncated_hub})
+        assert code == 4
+        err = capsys.readouterr().err
+        assert truncated_hub + "/org/model/resolve/main/" in err
+        assert "Traceback" not in err
+
+
 def test_hf_bad_repo_id():
     with pytest.raises(SourceError) as exc:
         read_hf("just-a-name", {})

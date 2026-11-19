@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import urllib.error
@@ -191,7 +192,7 @@ def _fetch(url: str, token: str | None, timeout: float) -> str | None:
             f"GET {url} failed with HTTP {exc.code}{hint}",
             EXIT_DOWNLOAD, key="err.http", url=url, status=exc.code,
         ) from exc
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.HTTPException) as exc:
         reason = getattr(exc, "reason", exc)
         raise SourceError(
             f"GET {url} failed: {reason}. Check the network/proxy, HF_ENDPOINT, or pass a local folder.",
