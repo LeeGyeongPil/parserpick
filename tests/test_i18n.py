@@ -122,6 +122,9 @@ OLD_ENGLISH = (
 )
 _ENGLISH_RUN = re.compile(r"[A-Za-z][A-Za-z'_.\-]*(?:[ ,]+[A-Za-z][A-Za-z'_.\-]*){3,}")
 _PYTHON_ERROR = re.compile(r"\b(?!RenderLimit\b|RenderProcessError\b)[A-Z]\w*(?:Error|Raised): [^\n]*")
+# OS errno text such as "[Errno 49] Can't assign requested address." -- only the OS phrase (up to its period or line end);
+# project English after it stays visible to the check
+_OS_ERROR = re.compile(r"\[Errno -?\d+\] [^.\n]*\.?")
 
 
 def _english_catalog_fragments() -> set[str]:
@@ -148,9 +151,19 @@ def _project_english(text: str) -> list[str]:
     rest = "\n".join(lines)
     for message in EXTERNAL_MESSAGES:
         rest = rest.replace(message, "")
+    rest = _OS_ERROR.sub("", rest)  # OS 가 준 errno 설명은 OS·환경마다 달라지는 원문
     rest = _PYTHON_ERROR.sub("", rest)  # 파이썬·Jinja 예외 원문 (우리 RenderLimit 은 제외)
     rest = re.sub(r"[\w.\-]+(?:, [\w.\-<>/]+){2,}", "", rest)  # 사용 가능한 이름 목록
     return _ENGLISH_RUN.findall(rest)
+
+
+def test_os_error_mask_is_narrow():
+    """The guard hides OS errno phrases only, not project English that follows them."""
+    ok = "네트워크 오류 [Errno 61] Connection refused. 다시 시도하세요"
+    assert _project_english(ok) == []
+    assert _project_english("[Errno 49] Can't assign requested address.") == []
+    bad = "[Errno 61] Connection refused. Could not reach the server right now"
+    assert _project_english(bad) != []
 
 
 def _cases(tmp_path):
